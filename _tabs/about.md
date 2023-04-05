@@ -5,5 +5,7 @@ order: 4
 ---
 
 > Hi there 👋
+>
 > It's xuao!
-{: .prompt-tip }
+>
+> {: .prompt-tip }
