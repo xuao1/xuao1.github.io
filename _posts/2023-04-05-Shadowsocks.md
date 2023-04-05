@@ -6,8 +6,6 @@ categories: [VPN]
 tags: [Shadowsocks, VPN, Vultr]
 ---
 
-# Shadowsocks
-
 简单记录下配置过程，利用 vultr 的服务器和 Shadowsocks 搭建 VPN
 
 ### 1. 在服务器上配置
