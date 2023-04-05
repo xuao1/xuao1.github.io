@@ -3,7 +3,7 @@ layout: compress
 permalink: /feed.xml
 # Atom Feed, reference: https://validator.w3.org/feed/docs/atom.html
 ---
-
+<?xml-stylesheet type="text/css" href="/css/style.css"?>
 {% capture source %}
 <feed xmlns="http://www.w3.org/2005/Atom">
   <id>{{ "/" | absolute_url }}</id>
