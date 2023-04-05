@@ -32,7 +32,7 @@ chmod +x shadowsocks-all.sh
 
 4、执行上述命令会有相关输入提示操作。根据需要选择。不明白的话就直接选 1 或者直接默认回车。之后会提示你输入密码和端口，对应设置即可，或者直接使用默认的。全部执行完成之后就会出现如下信息：
 
-```txt
+```bash
 StartingShadowsocks success
 
 Congratulations, Shadowsocks-Python server install completed!
