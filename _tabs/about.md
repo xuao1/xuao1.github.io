@@ -4,8 +4,6 @@ icon: fas fa-info-circle
 order: 4
 ---
 
-> Hi there 👋
->
-> It's xuao!
->
-> {: .prompt-tip }
+Hi there 👋
+
+It's xuao!
