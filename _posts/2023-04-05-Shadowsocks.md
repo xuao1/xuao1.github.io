@@ -85,13 +85,79 @@ systemctl restart firewalld.service
 
 3、可通过该网站测试端口是否开启：[Open Port Check Tool - Test Port Forwarding on Your Router](https://www.yougetsignal.com/tools/open-ports/)
 
-### 3. (可选)为服务器开启 BBR 加速
+### 3. (可选)配置加速
+
+#### 3.1 为服务器开启 BBR 加速
 
 ```shell
 wget --no-check-certificate https://github.com/teddysun/across/raw/master/bbr.sh && chmod +x bbr.sh && ./bbr.sh
 ```
 
 [一键为VPS开启BBR拥塞控制算法加速你的VPS网络速度](https://blog.csdn.net/weixin_39075913/article/details/129773890#:~:text=连接到你的VPS后，直接执行如下脚本一键开启BBR加速： wget --no-check-certificate https%3A%2F%2Fgithub.com%2Fteddysun%2Facross%2Fraw%2Fmaster%2Fbbr.sh %26%26,chmod %2Bx bbr.sh %26%26.%2Fbbr.sh 由于BBR加速只支持Linux内核版本4.9以上的，因此脚本会先升级系统内核，之后再开启BBR。)
+
+#### 3.2 增加系统文件描述符的最大限数
+
+编辑文件 `limits.conf`
+
+```shell
+vi /etc/security/limits.conf
+```
+
+增加以下两行
+
+```shell
+* soft nofile 51200
+* hard nofile 51200
+```
+
+启动shadowsocks服务器之前，设置以下参数
+
+```shell
+ulimit -n 51200
+```
+
+#### 3.3 调整内核参数
+
+修改配置文件 `/etc/sysctl.conf`
+
+```bash
+fs.file-max = 51200
+
+net.core.rmem_max = 67108864
+net.core.wmem_max = 67108864
+net.core.netdev_max_backlog = 250000
+net.core.somaxconn = 4096
+
+net.ipv4.tcp_syncookies = 1
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_tw_recycle = 0
+net.ipv4.tcp_fin_timeout = 30
+net.ipv4.tcp_keepalive_time = 1200
+net.ipv4.ip_local_port_range = 10000 65000
+net.ipv4.tcp_max_syn_backlog = 8192
+net.ipv4.tcp_max_tw_buckets = 5000
+net.ipv4.tcp_fastopen = 3
+net.ipv4.tcp_rmem = 4096 87380 67108864
+net.ipv4.tcp_wmem = 4096 65536 67108864
+net.ipv4.tcp_mtu_probing = 1
+net.ipv4.tcp_congestion_control = hybla
+```
+
+修改后执行 `sysctl -p` 使配置生效
+
+#### 3.4 使用魔改 BBR
+
+魔改BBR是原版BBR基础上的第三方激进版本，效果优于原版BBR。
+
+```shell
+wget "https://github.com/cx9208/Linux-NetSpeed/raw/master/tcp.sh" 
+chmod +x tcp.sh 
+sudo ./tcp.sh
+```
+
+先选 2 执行安装，然后 7 开启
+
+提示 remove 时，选 no
 
 ### 3. 在需要使用 VPN 的主机上安装客户端
 
