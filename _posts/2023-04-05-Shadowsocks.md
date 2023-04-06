@@ -58,6 +58,12 @@ Enjoy it!
 
 5、看到以上信息就说明安装完成了，然后根据不同的终端设备进行设置就可以了
 
+6、重新启动：
+
+```shell
+/etc/init.d/shadowsocks-python restart
+```
+
 ### 2. 开放端口
 
 开放对应的 TCP 端口
