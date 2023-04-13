@@ -99,7 +99,7 @@ systemctl restart firewalld.service
 wget --no-check-certificate https://github.com/teddysun/across/raw/master/bbr.sh && chmod +x bbr.sh && ./bbr.sh
 ```
 
-[一键为VPS开启BBR拥塞控制算法加速你的VPS网络速度](https://blog.csdn.net/weixin_39075913/article/details/129773890#:~:text=连接到你的VPS后，直接执行如下脚本一键开启BBR加速： wget --no-check-certificate https%3A%2F%2Fgithub.com%2Fteddysun%2Facross%2Fraw%2Fmaster%2Fbbr.sh %26%26,chmod %2Bx bbr.sh %26%26.%2Fbbr.sh 由于BBR加速只支持Linux内核版本4.9以上的，因此脚本会先升级系统内核，之后再开启BBR。)
+[一键为 VPS 开启 BBR 拥塞控制算法加速你的 VPS 网络速度](https://blog.csdn.net/weixin_39075913/article/details/129773890#:~:text=连接到你的VPS后，直接执行如下脚本一键开启BBR加速： wget --no-check-certificate https%3A%2F%2Fgithub.com%2Fteddysun%2Facross%2Fraw%2Fmaster%2Fbbr.sh %26%26,chmod %2Bx bbr.sh %26%26.%2Fbbr.sh 由于 BBR 加速只支持 Linux 内核版本 4.9 以上的，因此脚本会先升级系统内核，之后再开启 BBR。)
 
 #### 3.2 增加系统文件描述符的最大限数
 
@@ -116,7 +116,7 @@ vi /etc/security/limits.conf
 * hard nofile 51200
 ```
 
-启动shadowsocks服务器之前，设置以下参数
+启动 shadowsocks 服务器之前，设置以下参数
 
 ```shell
 ulimit -n 51200
@@ -153,11 +153,11 @@ net.ipv4.tcp_congestion_control = hybla
 
 #### 3.4 使用魔改 BBR
 
-魔改BBR是原版BBR基础上的第三方激进版本，效果优于原版BBR。
+魔改 BBR 是原版 BBR 基础上的第三方激进版本，效果优于原版 BBR。
 
 ```shell
-wget "https://github.com/cx9208/Linux-NetSpeed/raw/master/tcp.sh" 
-chmod +x tcp.sh 
+wget "https://github.com/cx9208/Linux-NetSpeed/raw/master/tcp.sh"
+chmod +x tcp.sh
 sudo ./tcp.sh
 ```
 
@@ -174,4 +174,3 @@ Windows：https://github.com/shadowsocks/shadowsocks-windows/releases
 Mac：https://github.com/yangfeicheung/Shadowsocks-X/releases
 
 Android：https://github.com/shadowsocks/shadowsocks-android/releases
-
