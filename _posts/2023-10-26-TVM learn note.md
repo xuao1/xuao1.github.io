@@ -342,6 +342,264 @@ np.savez("predictions.npz", output_0=result.outputs['output_0'])
 
 ### 5.0 导入依赖
 
+包括用于加载和转换模型的 `onnx`、用于下载测试数据的辅助实用程序、用于处理图像数据的 Python 图像库、用于图像数据预处理和后处理的 `numpy`、TVM Relay 框架和 TVM 图形处理器
+
+```python
+import onnx
+from tvm.contrib.download import download_testdata
+from PIL import Image
+import numpy as np
+import tvm.relay as relay
+import tvm
+from tvm.contrib import graph_executor
+```
+
+作用分别是：
+
++ `onnx`：加载和转换深度学习模型
++ `tvm.contrib.download`：TVM 框架提供的下载辅助工具，用于从网络上下载测试数据或模型文件
++ `PIL`：图像处理库，用于加载、处理和保存图像
++ `numpy`：用于科学计算和数值操作的核心库，用于图像数据预处理和后处理
++ `tvm.relay`：TVM 框架中的子模块，用于定义和优化深度学习模型。它提供了一种中间表示形式，允许对模型进行高效的编译和优化
++ `tvm`：TVM 是一个开源的深度学习模型优化和部署框架，支持多种硬件后端
++ `tvm.contrib.graph_executor`：TVM 图形处理器
+
+### 5.1 下载和加载 ONNX 模型
+
+使用 ResNet-50 v2，是一个深度为 50 层的卷积神经网络，适用于图像分类任务
+
+```python
+model_url = (
+    "https://github.com/onnx/models/raw/main/"
+    "vision/classification/resnet/model/"
+    "resnet50-v2-7.onnx"
+)
+
+model_path = download_testdata(model_url, "resnet50-v2-7.onnx", module="onnx")
+onnx_model = onnx.load(model_path)
+
+# 为 numpy 的 RNG 设置 seed，得到一致的结果
+np.random.seed(0)
+```
+
+### 5.2 下载、预处理和加载测试图像
+
+TVMC 采用了 NumPy 的 `.npz` 格式的输入和输出数据
+
+```python
+img_url = "https://s3.amazonaws.com/model-server/inputs/kitten.jpg"
+img_path = download_testdata(img_url, "imagenet_cat.png", module="data")
+
+# 重设大小为 224x224
+resized_image = Image.open(img_path).resize((224, 224))
+img_data = np.asarray(resized_image).astype("float32")
+
+# 输入图像是 HWC 布局，而 ONNX 需要 CHW 输入，所以转换数组
+img_data = np.transpose(img_data, (2, 0, 1))
+
+# 根据 ImageNet 输入规范进行归一化
+imagenet_mean = np.array([0.485, 0.456, 0.406]).reshape((3, 1, 1))
+imagenet_stddev = np.array([0.229, 0.224, 0.225]).reshape((3, 1, 1))
+norm_img_data = (img_data / 255 - imagenet_mean) / imagenet_stddev
+
+# 添加 batch 维度，期望 4 维输入：NCHW。
+img_data = np.expand_dims(norm_img_data, axis=0)
+```
+
+### 5.3 使用 Relay 编译模型
+
+1. 将模型导入到 Relay
+2. 用标准优化，将模型构建到 TVM 库中
+3. 从库中创建一个 TVM 计算图 runtime 模块
+
+```python
+input_name = "data" # 输入名称可能因模型类型而异，可用 Netron 工具检查输入名称
+shape_dict = {input_name: img_data.shape}
+
+mod, params = relay.frontend.from_onnx(onnx_model, shape_dict)
+
+with tvm.transform.PassContext(opt_level=3):
+    lib = relay.build(mod, target=target, params=params)
+
+dev = tvm.device(str(target), 0)
+module = graph_executor.GraphModule(lib["default"](dev))
+```
+
+### 5.4 在 TVM Runtime 执行
+
+```python
+# dtype = "float32"
+module.set_input(input_name, img_data)
+module.run()
+output_shape = (1, 1000)
+tvm_output = module.get_output(0, tvm.nd.empty(output_shape)).numpy()
+```
+
+### 5.5 收集基本性能数据
+
+现在是**未优化**版本：
+
+```python
+import timeit
+
+timing_number = 10
+timing_repeat = 10
+unoptimized = (
+    np.array(timeit.Timer(lambda: module.run()).repeat(repeat=timing_repeat, number=timing_number))
+    * 1000
+    / timing_number
+)
+unoptimized = {
+    "mean": np.mean(unoptimized),
+    "median": np.median(unoptimized),
+    "std": np.std(unoptimized),
+}
+
+print(unoptimized)
+```
+
+- `timeit.Timer(lambda: module.run())`: 使用lambda函数创建一个无参数的函数，该函数仅执行 `module.run()`。
+- `.repeat(repeat=timing_repeat, number=timing_number)`: 对上述lambda函数进行计时。重复计时 `timing_repeat` 次（即10次），每次执行 `timing_number` 次（即10次）`module.run()`。所以之后需要除以 `timing_number`
+
+### 5.6 输出后处理
+
+需要用专为该模型提供的查找表，运行一些后处理
+
+```python
+from scipy.special import softmax
+
+# 下载标签列表
+labels_url = "https://s3.amazonaws.com/onnx-model-zoo/synset.txt"
+labels_path = download_testdata(labels_url, "synset.txt", module="data")
+
+with open(labels_path, "r") as f:
+    labels = [l.rstrip() for l in f]
+
+# 打开输出文件并读取输出张量
+scores = softmax(tvm_output)
+scores = np.squeeze(scores)
+ranks = np.argsort(scores)[::-1]
+for rank in ranks[0:5]:
+    print("class='%s' with probability=%f" % (labels[rank], scores[rank]))
+```
+
+运行结果（不包含 5.5 部分）：
+
+![tvm_image2]({{ site.url }}/my_img/TVM_image12.png)
+
+### 5.7 调优模型
+
+在 TVM 的 `autotvm` 模块中，调优是一个重要的步骤，其目标是为给定的任务找到最优的配置以提高性能。调优过程大致分为两个主要阶段：**搜索** 和 **评估**
+
+最简单的调优形式中，需要：target，调优记录文件的存储路径
+
+```python
+import tvm.auto_scheduler as auto_scheduler
+from tvm.autotvm.tuner import XGBTuner
+from tvm import autotvm
+```
+
+设置部分基本参数：
+
++ `number`：将要测试的不同配置的数量
+
++ `repeat`：将对每个配置进行多少次测试 
+
++ `min_repeat_ms`：运行测试需要多长时间，如果重复次数低于此时间，则增加其值
+
+  在 GPU 上进行精确调优时此选项是必需的，在 CPU 调优则不是必需的，将此值设置为 0表示禁
+
++ `timeout`：每个测试配置运行训练代码的时间上限
+
+```python
+number = 10
+repeat = 1
+min_repeat_ms = 0  # 调优 CPU 时设置为 0
+timeout = 10  # 秒
+
+# 创建 autotvm 运行器
+runner = autotvm.LocalRunner(
+    number=number,
+    repeat=repeat,
+    timeout=timeout,
+    min_repeat_ms=min_repeat_ms,
+    enable_cpu_cache_flush=True,
+)
+```
+
+Runner 负责在硬件上**评估给定配置的性能**，LocalRunner 是运行在本地机器上的一个特定类型的 Runner
+
+```python
+tuning_option = {
+    "tuner": "xgb",
+    "trials": 20,
+    "early_stopping": 100,
+    "measure_option": autotvm.measure_option(
+        builder=autotvm.LocalBuilder(build_func="default"), runner=runner
+    ),
+    "tuning_records": "resnet-50-v2-autotuning.json",
+}
+```
+
++ 使用 XGBoost 算法来指导搜索
+
++ 试验次数设置为 20，此处这个值比较小。对于 CPU 推荐 1500，对于 GPU 推荐 3000-4000。
+
++ `early_stopping`：使得搜索提前停止的试验最小值，如果在一系列连续的尝试中没有看到性能改进，参数允许调优过程提前终止
+
++ measure option 决定了构建试用代码并运行的位置
+
+  定义了两个主要组件：
+
+  + builder 负责从给定配置构建可执行代码
+  + runner 负责运行并测量该代码的性能
+
++ `Tuning_records`：指定将调优数据写入的哪个文件中
+
+```python
+# 首先从 onnx 模型中提取任务，mod 是将 onnx 导入到 Relay 时返回的参数
+tasks = autotvm.task.extract_from_program(mod["main"], target=target, params=params)
+
+# 按顺序调优提取的任务
+for i, task in enumerate(tasks):
+    prefix = "[Task %2d/%2d] " % (i + 1, len(tasks))
+    tuner_obj = XGBTuner(task, loss_type="rank")
+    tuner_obj.tune(
+        n_trial=min(tuning_option["trials"], len(task.config_space)),
+        early_stopping=tuning_option["early_stopping"],
+        measure_option=tuning_option["measure_option"],
+        callbacks=[
+            autotvm.callback.progress_bar(tuning_option["trials"], prefix=prefix),
+            autotvm.callback.log_to_file(tuning_option["tuning_records"]),
+        ],
+    )
+```
+
+`callbacks` 是函数列表，这些函数在调优过程中的不同时间点被调用。
+
+- `autotvm.callback.progress_bar(tuning_option["trials"], prefix=prefix)`
+
+  这个回调函数显示一个进度条，给用户一个直观的了解调优过程的进度。
+
+- `autotvm.callback.log_to_file(tuning_option["tuning_records"])`
+
+  这个回调函数将调优日志写入指定的文件中。
+
+### 5.8 使用调优数据编译优化模型
+
+获取存储在 `resnet-50-v2-autotuning.json`（上述调优过程的输出文件）中的调优记录。编译器会用这个结果，为指定 target 上的模型生成高性能代码。
+
+```python
+with autotvm.apply_history_best(tuning_option["tuning_records"]):
+    with tvm.transform.PassContext(opt_level=3, config={}):
+        lib = relay.build(mod, target=target, params=params)
+
+dev = tvm.device(str(target), 0)
+module = graph_executor.GraphModule(lib["default"](dev))
+```
+
+剩余过程一摸一样。
+
 
 
 
