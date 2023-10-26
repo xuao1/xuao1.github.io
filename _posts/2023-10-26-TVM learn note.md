@@ -144,7 +144,7 @@ resnet50-v2-7-tvm.tar
 
 从编译模块的输出中提取标签，用一个脚本
 
-![![tvm_image2]({{ site.url }}/my_img/TVM_image8.png)
+![tvm_image2]({{ site.url }}/my_img/TVM_image8.png)
 
 ### 3.4 自动调优 ResNet 模型
 
