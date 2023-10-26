@@ -3,7 +3,7 @@ title: TVM Learning Note
 author: xuao
 date: 2023-10-26 15:33:00 +800
 categories: [TVM]
-tags: [TVM, Compilor]
+tags: [TVM, Compilor, GPU]
 ---
 
 # TVM 学习笔记
