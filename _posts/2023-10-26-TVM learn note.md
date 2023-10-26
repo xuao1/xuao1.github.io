@@ -2,7 +2,7 @@
 title: TVM Learning Note
 author: xuao
 date: 2023-10-26 15:33:00 +800
-categories: [TVM, Compilor]
+categories: [TVM]
 tags: [TVM, Compilor]
 ---
 
