@@ -680,19 +680,121 @@ alias tvmc='python3 -m tvm.driver.tvmc'
 
 ## 7 在 GPU 平台上使用 Docker 运行 TVM
 
+### 7.1 获取并启动
+
 前提是安装了 docker 和 nvidia-docker
 
-与第六部分的配置过程基本一样，但是 pull 的是 GPU 版本的 Docker Image
+pull 的是 GPU 版本的 Docker Image
 
 ```shell
-docker pull tlcpack/ci-gpu:20231004-111300-7a1f7d0b
+docker pull tlcpack/ci-gpu:20230504-142417-4d37a0a0
 ```
 
+启动（设置了退出时自动删除）：
+
+```shell
+docker run --gpus all --privileged -v $(pwd):/workspace -it --rm tlcpack/ci-gpu:20230504-142417-4d37a0a0 /bin/bash
+```
+
+![tvm_image2]({{ site.url }}/my_img/TVM_image17.png)
 
 
 
+### 7.2 在容器内安装 TVM
 
+下载 tvm 源码：
 
+```shell
+git clone --recursive https://github.com/apache/tvm tvm
+```
+
+安装依赖（似乎 Docker 里已经按转好了）：
+
+```shell
+apt-get update
+apt-get install -y python3 python3-dev python3-setuptools gcc libtinfo-dev zlib1g-dev build-essential cmake libedit-dev libxml2-dev
+```
+
+安装 llvm：
+
+```shell
+apt-get install llvm
+```
+
+![tvm_image2]({{ site.url }}/my_img/TVM_image18.png)
+
+make：（在 tvm 文件夹下）
+
+```shell
+mkdir build
+cp cmake/config.cmake build
+```
+
+修改 config.cmake，设置 `set(USE_LLVM ON)`，利用 CMake 搜索一个可用的 LLVM 版本。
+
+设置 `set(USE_CUDA ON)`
+
+```shell
+cd build
+cmake ..
+make -j8
+```
+
+安装 Python package：在 ~/.bashrc 末尾添加：
+
+```shell
+export TVM_HOME=/path/to/tvm
+export PYTHONPATH=$TVM_HOME/python:${PYTHONPATH}
+alias tvmc='python3 -m tvm.driver.tvmc'
+```
+
+然后运行命令：`source ~/.bashrc`
+
+### 7.3 使用 Python API 运行 TVM
+
+CPU 版（未引入调优）：
+
+![tvm_image2]({{ site.url }}/my_img/TVM_image14.png)
+
+GPU 版：修改代码中的 target 为 cuda
+
+未调优：
+
+![tvm_image2]({{ site.url }}/my_img/TVM_image15.png)
+
+调优：
+
+```python
+target = tvm.target.cuda()
+
+number = 20
+repeat = 3
+min_repeat_ms = 150  # 调优 CPU 时设置为 0
+timeout = 10  # 秒
+
+# 创建 autotvm 运行器
+runner = autotvm.LocalRunner(
+    number=number,
+    repeat=repeat,
+    timeout=timeout,
+    min_repeat_ms=min_repeat_ms,
+)
+
+tuning_option = {
+    "tuner": "xgb",
+    "trials": 2000,
+    "early_stopping": 600,
+    "measure_option": autotvm.measure_option(
+        builder=autotvm.LocalBuilder(build_func="default"Z),
+        runner=runner
+    ),
+    "tuning_records": "resnet-50-v2-autotuning.json",
+}
+```
+
+![tvm_image2]({{ site.url }}/my_img/TVM_image16.png)
+
+ 目前尚未跑完
 
 
 
