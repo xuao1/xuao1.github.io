@@ -1,12 +1,12 @@
 ---
-title: TVM Learning Note
+title: TVM Learning Note 1
 author: xuao
 date: 2023-10-26 15:33:00 +800
 categories: [TVM]
 tags: [TVM, Compilor, GPU]
 ---
 
-# TVM 学习笔记
+# TVM 学习笔记：部署与运行
 
 ## 1 TVM 原理
 
@@ -59,15 +59,7 @@ TVM 是一个开源的深度学习编译器，适用于 CPU、GPU、ARM 等多�
 
 ![tvm_image2]({{ site.url }}/my_img/TVM_image2.png)
 
-构建 cpptest:
 
-![tvm_image2]({{ site.url }}/my_img/TVM_image3.png)
-
-运行 cpptest：
-
-![tvm_image2]({{ site.url }}/my_img/TVM_image4.png)
-
-![tvm_image2]({{ site.url }}/my_img/TVM_image5.png)
 
 ## 3 使用 TVMC 编译和优化模型
 
@@ -601,6 +593,100 @@ module = graph_executor.GraphModule(lib["default"](dev))
 剩余过程一摸一样。
 
 
+
+## 6 使用 Docker 部署 TVM
+
+### 6.1 获取并启动
+
+获取 TVM CPU 版的 Docker 镜像：
+
+```shell
+docker pull tlcpack/ci-cpu:20230604-060130-0af9ff90e
+```
+
+启动：
+
+```shell
+docker run -v $(pwd):/workspace -it tlcpack/ci-cpu:20230604-060130-0af9ff90e /bin/bash
+```
+
++ `-v $(pwd):/workspace` 是将当前目录映射到容器的 `/workspace` 目录，`-it` 是为容器分配一个伪 TTY 和保持 stdin 打开，最后的 `/bin/bash` 是容器启动后要运行的命令，用于开启一个 bash shell
++ 使用 exit 命令退出 Docker
+
+常用 Docker 命令：
+
+```shell
+docker ps -a
+docker start [CONTAINER_ID]
+docker attach [CONTAINER_ID]
+docker stop [CONTAINER_ID]
+```
+
+### 6.2 在容器内安装 TVM
+
+下载 tvm 源码：
+
+```shell
+git clone --recursive https://github.com/apache/tvm tvm
+```
+
+安装依赖（似乎 Docker 里已经按转好了）：
+
+```shell
+apt-get update
+apt-get install -y python3 python3-dev python3-setuptools gcc libtinfo-dev zlib1g-dev build-essential cmake libedit-dev libxml2-dev
+```
+
+安装 llvm：
+
+```shell
+apt install llvm
+```
+
+make：（在 tvm 文件夹下）
+
+```shell
+mkdir build
+cp cmake/config.cmake build
+```
+
+修改 config.cmake，设置 `set(USE_LLVM ON)`，利用 CMake 搜索一个可用的 LLVM 版本。
+
+```shell
+cd build
+cmake ..
+make -j8
+```
+
+安装 Python package：在 ~/.bashrc 末尾添加：
+
+```shell
+export TVM_HOME=/path/to/tvm
+export PYTHONPATH=$TVM_HOME/python:${PYTHONPATH}
+alias tvmc='python3 -m tvm.driver.tvmc'
+```
+
+然后运行命令：`source ~/.bashrc`
+
+### 6.3 在容器内使用命令行运行 tvmc
+
+与 3 使用 TVMC 编译和优化模型 基本一样
+
+### 6.4 使用 Python API 运行 TVM
+
+直接运行第五部分的代码即可
+
+
+
+## 7 在 GPU 平台上使用 Docker 运行 TVM
+
+前提是安装了 docker 和 nvidia-docker
+
+与第六部分的配置过程基本一样，但是 pull 的是 GPU 版本的 Docker Image
+
+```shell
+docker pull tlcpack/ci-gpu:20231004-111300-7a1f7d0b
+```
 
 
 
