@@ -796,6 +796,44 @@ tuning_option = {
 
  目前尚未跑完
 
+> 疑惑：（已解决）
+>
+> 在 docker 内运行调优程序时，无论在容器内还是宿主机上运行 nvidia-smi，都看不到正在运行的进程，而且 GPU 利用率、显存使用量、温度和功率都保持在非常低的水平：
+>
+> ```shell
+> Sun Oct 29 02:48:18 2023       
+> +-----------------------------------------------------------------------------+
+> | NVIDIA-SMI 515.48.07    Driver Version: 515.48.07    CUDA Version: 11.8     |
+> |-------------------------------+----------------------+----------------------+
+> | GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+> | Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+> |                               |                      |               MIG M. |
+> |===============================+======================+======================|
+> |   0  NVIDIA A100-PCI...  On   | 00000000:18:00.0 Off |                    0 |
+> | N/A   44C    P0    37W / 250W |      2MiB / 40960MiB |      0%      Default |
+> |                               |                      |             Disabled |
+> +-------------------------------+----------------------+----------------------+
+>                                                                                
+> +-----------------------------------------------------------------------------+
+> ```
+>
+> 通过命令：
+>
+> ```shell
+> nvidia-smi --query-compute-apps=pid,process_name,used_memory --format=csv
+> ```
+>
+> 显示：
+>
+> ```shell
+> pid, process_name, used_gpu_memory [MiB]
+> 1417460, /venv/apache-tvm-py3.8/bin/python3, 418 MiB
+> ```
+>
+> 说明是存在一个进程，在调用 docker 内部的 /venv 文件夹下的文件在运行，至于 GPU 占用率不高，在使用 `watch -n 1 nvidia-smi` 命令时，可以注意到在某些短暂的时间段里 GPU 占用率等会突然上升，所以应该是 TVM 的调用程序不会一直高强度使用 GPU
+
+
+
 
 
 
