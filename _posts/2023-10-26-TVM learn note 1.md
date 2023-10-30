@@ -620,6 +620,8 @@ docker ps -a
 docker start [CONTAINER_ID]
 docker attach [CONTAINER_ID]
 docker stop [CONTAINER_ID]
+docker exec -it [CONTAINER_ID] /bin/bash
+docker rm -f <containerid>
 ```
 
 ### 6.2 在容器内安装 TVM
@@ -832,7 +834,7 @@ tuning_option = {
 >
 > 说明是存在一个进程，在调用 docker 内部的 /venv 文件夹下的文件在运行，至于 GPU 占用率不高，在使用 `watch -n 1 nvidia-smi` 命令时，可以注意到在某些短暂的时间段里 GPU 占用率等会突然上升，所以应该是 TVM 的调用程序不会一直高强度使用 GPU
 
-
+![tvm_image2]({{ site.url }}/my_img/TVM_image17.png)
 
 
 
