@@ -109,7 +109,7 @@ python3 launch-command.py --name client1 --port 50052 --ip 127.0.0.1 --timeout 1
 >
 > [__libc_dlopen_mode and __libc_dlsym gone in glibc-2.33.9000+ · Issue #756 · apitrace/apitrace (github.com)](https://github.com/apitrace/apitrace/issues/756)
 >
-> ![image-20231108213950485](C:\Users\15370\AppData\Roaming\Typora\typora-user-images\image-20231108213950485.png)
+> ![Gemini-image9]({{ site.url }}/my_img/Gemini-image9.png)
 >
 > 修改 `hook.cpp` 第 74 行：
 >
