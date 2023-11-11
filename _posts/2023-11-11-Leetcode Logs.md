@@ -10,7 +10,7 @@ tags: [LeetCode, C++, C, Algorithm]
 
 ### 2023-11-11
 
-765. [情侣牵手](https://leetcode.cn/problems/couples-holding-hands/description/)
+765 [情侣牵手](https://leetcode.cn/problems/couples-holding-hands/description/)
 
 > `n` 对情侣坐在连续排列的 `2n` 个座位上，想要牵到对方的手。
 >
