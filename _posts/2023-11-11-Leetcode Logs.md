@@ -68,3 +68,92 @@ public:
 };
 ```
 
+### 2023-11-12
+
+715 [Range 模块](https://leetcode.cn/problems/range-module/description/)
+
+> 设计一个数据结构来跟踪表示为 **半开区间** 的范围并查询它们。
+>
+> **半开区间** `[left, right)`
+>
+> 实现增删查
+
+**平衡二叉搜索树的模板题**
+
+在 C++ STL 中为 `set`
+
+树上每个节点代表一个区间，以区间的左端点 left 作为 key，按照 left 从小到大排序
+
+注意到：由于会引入区间合并操作，所以树上的节点不会有重叠
+
+在代码过程中有两个细节需要注意：
+
++ `ranges.lower_bound`：返回第一个 key **大于等于** left 的节点，这里要额外处理**等于**的情况
+
++ 需要处理左端点小于 left，但是右端点大于 left 的重叠情况，所以上一步返回的迭代器需要向前看一个：
+
+  ```c++
+  if(it != ranges.begin() && (--it)->second < left) it++;
+  ```
+
+另外学到了：
+
+```c++
+it = ranges.erase(it);
+```
+
+这样去迭代。
+
+以及引用 vector 中的元素：
+
+```c++
+it = ranges.erase(it);
+```
+
+完整代码：
+
+```c++
+class RangeModule {
+public:
+    RangeModule() {}
+
+    void addRange(int left, int right) {
+        auto it = ranges.lower_bound({ left, right }); 
+        if (it != ranges.begin() && (--it)->second < left) it++;
+        while (it != ranges.end() && it->first <= right) {
+            left = min(left, it->first);
+            right = max(right, it->second);
+            it = ranges.erase(it);
+        }
+        ranges.insert({ left, right });
+    }
+
+    bool queryRange(int left, int right) {
+        auto it = ranges.lower_bound({ left, right });
+        if (it->first == left) {
+            return it->second >= right;
+        }
+        else {
+            if (it == ranges.begin()) return false;
+            it--;
+            return it->second >= right;
+        }
+    }
+
+    void removeRange(int left, int right) {
+        auto it = ranges.lower_bound({ left, right });
+        if (it != ranges.begin() && (--it)->second < left) it++;
+        vector<pair<int, int>> tmp;
+        while (it != ranges.end() && it->first < right) {
+            if (it->first < left) tmp.push_back({ it->first, left });
+            if (it->second > right) tmp.push_back({ right, it->second });
+            it = ranges.erase(it);
+        }
+        for (const auto& t : tmp) ranges.insert(t);
+    }
+
+private:
+    set<pair<int, int>> ranges;
+};
+```
+
