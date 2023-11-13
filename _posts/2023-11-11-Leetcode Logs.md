@@ -157,3 +157,81 @@ private:
 };
 ```
 
+### 2023-11-13
+
+307 [区域和检索 - 数组可修改 ](https://leetcode.cn/problems/range-sum-query-mutable/description/)
+
+> 给你一个数组 `nums` ，请你完成两类查询。
+>
+> 1. 其中一类查询要求 **更新** 数组 `nums` 下标对应的值
+> 2. 另一类查询要求返回数组 `nums` 中索引 `left` 和索引 `right` 之间（ **包含** ）的nums元素的 **和** ，其中 `left <= right`
+
+**基础版线段树的模板题**
+
+只涉及到加法，而且修改是单点修改，所以比较简单的模板。~~虽然好久没写已经忘了~~
+
+值得关注的是求区间和，有一些细节需要注意。
+
+完成代码：
+
+```c++
+class NumArray {
+public:
+    NumArray(vector<int>& nums) {
+        if(nums.empty()) return;
+        n = nums.size();
+        tree.resize(2 * n);
+        buildTree(nums);
+    }
+    
+    void update(int index, int val) {
+        index += n;
+        tree[index] = val;
+        while(index > 0){
+            int left = index;
+            int right = index;
+            if(index % 2 == 0){
+                right = index + 1;
+            }
+            else{
+                left = index - 1;
+            }
+            tree[index / 2] = tree[left] + tree[right];
+            index /= 2;
+        }
+    }
+    
+    int sumRange(int left, int right) {
+        left += n;
+        right += n;
+        int sum = 0;
+        while(left <= right){
+            if(left % 2 == 1){
+                sum += tree[left];
+                left++;
+            }
+            if(right % 2 == 0){
+                sum += tree[right];
+                right--;
+            }
+            left /= 2;
+            right /= 2;
+        }
+        return sum;
+    }
+
+private:
+    vector<int> tree;
+    int n;
+
+    void buildTree(vector<int>& nums){
+        for(int i = n; i < 2 * n; i++){
+            tree[i] = nums[i - n];
+        }
+        for(int i = n - 1; i > 0; i--){
+            tree[i] = tree[i * 2] + tree[i * 2 + 1];
+        }
+    }
+};
+```
+
