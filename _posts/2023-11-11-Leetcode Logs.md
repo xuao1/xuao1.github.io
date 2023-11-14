@@ -235,3 +235,87 @@ private:
 };
 ```
 
+### 2023-11-14
+
+1334 [阈值距离内邻居最少的城市](https://leetcode.cn/problems/find-the-city-with-the-smallest-number-of-neighbors-at-a-threshold-distance/description/)
+
+> 有 `n` 个城市，按从 `0` 到 `n-1` 编号。给你一个边数组 `edges`，其中 `edges[i] = [fromi, toi, weighti]` 代表 `fromi` 和 `toi` 两个城市之间的双向加权边，距离阈值是一个整数 `distanceThreshold`。
+>
+> 返回能通过某些路径到达其他城市数目最少、且路径距离 **最大** 为 `distanceThreshold` 的城市。如果有多个这样的城市，则返回编号最大的城市。
+>
+> n <= 100
+
+**Dijkstra 模板题**
+
+只需要以每个城市为起点，Dijkstra，记录到所有城市的最短距离，统计有多少在 `distanceThreshold` 以内，最后比较。
+
+可以剪枝：在 Dijkstra 入队时，如果已经超过了 `distanceThreshold`，那么不入队。
+
+时间复杂度：$O(n^2log(n))$
+
+具体代码细节上，学到了：
+
++ vector 的 `push_bach` 和 `emplace_back` 的不同，前者是将已经创建好的对象直接插入，后者是提供参数，在 vector 内创建。后者效率要高一些。
+
++ vector 初始化：
+
+  ```c++
+  vector<int> dist(graph.size(), INT_MAX);
+  ```
+
+完整代码：
+
+```c++
+class Solution {
+public:
+    int findTheCity(int n, vector<vector<int>>& edges, int distanceThreshold) {
+        graph.resize(n);
+        for(auto& edge: edges){
+            graph[edge[0]].emplace_back(edge[1], edge[2]);
+            graph[edge[1]].emplace_back(edge[0], edge[2]);
+        }
+        for(int i = 0; i < n; i++){
+            vector<int> dist = dijkstra(i, distanceThreshold);
+            int count = 0;
+            for(int d : dist){
+                if(d <= distanceThreshold){
+                    count++;
+                }
+            }
+            if(count <= minCount){
+                minCount = count;
+                minCity = i;
+            }
+        }
+        return minCity;
+    }
+
+    vector<int> dijkstra(int start, int threshold){
+        vector<int> dist(graph.size(), INT_MAX);
+        dist[start] = 0;
+        priority_queue<pair<int, int>, vector<pair<int, int>>, greater<pair<int, int>>> pq;
+        pq.emplace(0, start);
+
+        while(!pq.empty()){
+            auto [d, u] = pq.top();
+            pq.pop();
+            if(d > dist[u]) continue;
+            for(auto& [v, w] : graph[u]){
+                if(dist[v] > dist[u] + w){
+                    dist[v] = dist[u] + w;
+                    if(dist[v] <= threshold){
+                        pq.emplace(dist[v], v);
+                    }
+                }
+            }
+        }
+        return dist;
+    }
+    
+private:
+    vector<vector<pair<int, int>>> graph; // graph[i] = {j, w} 表示 i 到 j 的距离为 w
+    int minCount = INT_MAX;
+    int minCity = -1;
+};
+```
+
