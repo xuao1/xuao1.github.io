@@ -323,4 +323,10 @@ private:
 
 2656 [K 个元素的最大和](https://leetcode.cn/problems/maximum-sum-with-exactly-k-elements/description/)
 
-过于简单，不做记录
+比较简单，不做记录。
+
+### 2023-11-16
+
+2760 [最长奇偶子数组](https://leetcode.cn/problems/longest-even-odd-subarray-with-threshold/description/)
+
+也比较简单，假如数据范围大点必须要用 DP，那么还有记录的必要。
