@@ -330,3 +330,111 @@ private:
 2760 [最长奇偶子数组](https://leetcode.cn/problems/longest-even-odd-subarray-with-threshold/description/)
 
 也比较简单，假如数据范围大点必须要用 DP，那么还有记录的必要。
+
+### 2023-11-17
+
+2736 [最大和查询](https://leetcode.cn/problems/maximum-sum-queries/description/)
+
+> 给你两个长度为 `n` 、下标从 **0** 开始的整数数组 `nums1` 和 `nums2` ，另给你一个下标从 **1** 开始的二维数组 `queries` ，其中 `queries[i] = [xi, yi]` 。
+>
+> 对于第 `i` 个查询，在所有满足 `nums1[j] >= xi` 且 `nums2[j] >= yi` 的下标 `j` `(0 <= j < n)` 中，找出 `nums1[j] + nums2[j]` 的 **最大值** ，如果不存在满足条件的 `j` 则返回 **-1** 。
+>
+> 返回数组 `answer` *，*其中 `answer[i]` 是第 `i` 个查询的答案
+>
+> - `nums1.length == nums2.length` 
+> - `n == nums1.length `
+> - `1 <= n <= 10^5`
+> - `1 <= queries.length <= 10^5`
+
+首先，根据数据范围，直接暴力两重循环会超时。
+
+最早考虑将 nums1 排序，对每个查询，找到符合条件的下标（二分查找），然后只遍历符合条件的下标，但是时间复杂度并没有下降很多，极端情况下，仍然需要遍历所有 nums1。所以仍然会超时。
+
+~~所以只能看题解了~~
+
+首先一个关键点是：
+
+> 找出 `nums1[j] + nums2[j]` 的 **最大值** 
+
+即，每次求和时，nums1 和 nums1 的下标需要一致。
+
+两个技巧：
+
++ 将 nums1 和 nums2 合并到一个 pair 数组，保证了求和时下标一致，然后将 nums 以及查询数组**按照 x 降序排序**
+
+  这样在访问到某个查询时，能方便地保留所有 x 满足条件的 nums
+
++ 维护一个 nums 的**单调栈**，按照 **x + y** 从底到顶从大到小
+
+  这样对于某个查询，单调栈里的 nums 的 x 一定是满足的；那就二分查找第一个满足 y 条件的即为此次查询的 ans
+
+  那么每次访问到 nums，如果 x + y 比栈顶大，那么弹栈，如果当前 nums 的 y 比栈顶的大，那么入栈。
+
+  **关键：如果当前访问到的 y 比之前的都要小，那么 x + y 一定小于栈中元素。所以能入栈的，一定是 y 比较大的。所以栈中元素不仅 x + y 从大到小，x 从大到小，而且 y 是从小到大。**
+
+概括来说：
+
++ nums 按照 x 从大到小排序，单调栈从底到顶按 x + y 从大到小排序，那么访问 nums 的顺序保证了：栈中 x 从大到小，y 从小到大。
++ **直观理解是，保留了要么 x 有优势，要么 y 有优势的 nums**
+
+核心总结起来，就是一句话：
+
+**如果一个 num 的 x 和 y 都比另一个的大，那么另一个一定不会是 ans**
+
+完整代码：
+
+```c++
+class Solution {
+public:
+    vector<int> maximumSumQueries(vector<int>& nums1, vector<int>& nums2, vector<vector<int>>& queries) {
+        int n = nums1.size();
+        int m = queries.size();
+        vector<pair<int, int>> sortedNums;
+        vector<tuple<int, int, int>> sortedQueries;
+        for (int i = 0; i < n; i++) {
+            sortedNums.emplace_back(nums1[i], nums2[i]);
+        }
+        sort(sortedNums.begin(), sortedNums.end(), greater<pair<int, int>>());
+        for (int i = 0; i < m; i++) {
+            sortedQueries.emplace_back(queries[i][0], queries[i][1], i);
+        }
+        sort(sortedQueries.begin(), sortedQueries.end(), greater<tuple<int, int, int>>());
+        vector<pair<int, int>> stack;
+        vector<int> answer(m, -1);
+        int j = 0;
+        for (auto [x, y, i] : sortedQueries) {
+            while (j < n && sortedNums[j].first >= x) {
+                auto [num1, num2] = sortedNums[j];
+                while (!stack.empty() && stack.back().second <= num1 + num2) {
+                    stack.pop_back();
+                }
+                if (stack.empty() || stack.back().first < num2) {
+                    stack.emplace_back(num2, num1 + num2);
+                }
+                j++;
+            }
+            int k = binary_search(stack, y);
+            if (k < stack.size()) {
+                answer[i] = stack[k].second;
+            }
+        }
+        return answer;
+    }
+
+    int binary_search(vector<pair<int, int>>& stack, int y) {
+        int l = 0, r = stack.size();
+        while (l < r) {
+            int mid = (l + r) / 2;
+            if (stack[mid].first >= y) {
+                r = mid;
+            }
+            else {
+                l = mid + 1;
+            }
+        }
+        return l;
+    }
+};
+```
+
+值得关注的是，二分查找，`r = stack.size()`，而不是 `stack.size() - 1`，以处理边界情况。
