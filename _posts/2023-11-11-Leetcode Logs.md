@@ -438,3 +438,21 @@ public:
 ```
 
 值得关注的是，二分查找，`r = stack.size()`，而不是 `stack.size() - 1`，以处理边界情况。
+
+### 2023-11-18
+
+2342 [数位和相等数对的最大和](https://leetcode.cn/problems/max-sum-of-a-pair-with-equal-sum-of-digits/description/)
+
+> 给你一个下标从 **0** 开始的数组 `nums` ，数组中的元素都是**正**整数。请你选出两个下标 `i` 和 `j`（`i != j`），且 `nums[i]` 的数位和 与 `nums[j]` 的数位和相等。
+>
+> 请你找出所有满足条件的下标 `i` 和 `j` ，找出并返回 `nums[i] + nums[j]` 可以得到的**最大值**。
+>
+> 数位和，即各位的和
+
+比较简单，可以使用 `unordered_map` 实现：
+
+```c++
+unordered_map<int, pair<int, int>> digitSums;
+```
+
+维护一个数位和对应的最大值和次最大值，值得注意的一个细节是不存在满足条件的数对，返回 -1 
