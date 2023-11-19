@@ -456,3 +456,60 @@ unordered_map<int, pair<int, int>> digitSums;
 ```
 
 维护一个数位和对应的最大值和次最大值，值得注意的一个细节是不存在满足条件的数对，返回 -1 
+
+### 2023-11-19
+
+689 [三个无重叠子数组的最大和](https://leetcode.cn/problems/maximum-sum-of-3-non-overlapping-subarrays/description/)
+
+> 给你一个整数数组 `nums` 和一个整数 `k` ，找出三个长度为 `k` 、互不重叠、且全部数字和（`3 * k` 项）最大的子数组，并返回这三个子数组。
+>
+> 以下标的数组形式返回结果，数组中的每一项分别指示每个子数组的起始位置（下标从 **0** 开始）。如果有多个结果，返回字典序最小的一个。
+
+一开始想用 DP（其实是看到题目标签里有），但是想了想，觉得状态转移方程不是很好写
+
+**滑动窗口**
+
+维护三个滑动窗口，长度均为 k，并且同步向右移。win1, win2, win3
+
+维护三个当前最大值，分别是一个子数组、两个子数组、三个子数组。max1, max2, max3
+
+**关键：每次移动，win1 比较然后更新 max1，max1 + win2 比较然后更新 max2，max2 + win3 比较然后更新 max3**
+
+记录好下标，这里别想当然，每个 max 的多个下标需要分别记录
+
+完整代码：
+
+```c++
+class Solution {
+public:
+    vector<int> maxSumOfThreeSubarrays(vector<int>& nums, int k) {
+        int win1 = 0, win2 = 0, win3 = 0;
+        int max1 = 0, max2 = 0, max3 = 0;
+        int index1 = 0;
+        int index2_1 = 0, index2_2 = 0;
+        int index3_1 = 0, index3_2 = 0, index3_3 = 0;
+        int n = nums.size();
+        for(int i = 2 * k; i < n; i++){
+            win1 += nums[i - 2 * k]; win2 += nums[i - k]; win3 += nums[i];
+            if(i < 3 * k - 1) continue;
+            if(win1 > max1){
+                max1 = win1;
+                index1 = i - 3 * k + 1;
+            }
+            if(max1 + win2 > max2){
+                max2 = max1 + win2;
+                index2_1 = index1; index2_2 = i - 2 * k + 1;
+            }
+            if(max2 + win3 > max3){
+                max3 = max2 + win3;
+                index3_1 = index2_1; index3_2 = index2_2; index3_3 = i - k + 1;
+            }
+            win1 -= nums[i - 3 * k + 1]; win2 -= nums[i - 2 * k + 1]; win3 -= nums[i - k + 1];
+        }
+        vector<int> ans;
+        ans.push_back(index3_1); ans.push_back(index3_2); ans.push_back(index3_3);
+        return ans;
+    }
+};
+```
+
