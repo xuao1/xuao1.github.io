@@ -518,3 +518,9 @@ public:
 53 [最大子数组和](https://leetcode.cn/problems/maximum-subarray/description/)
 
 比较简单的 DP，不做记录
+
+### 2023-11-21
+
+2261 [美化数组的最少删除数](https://leetcode.cn/problems/minimum-deletions-to-make-array-beautiful/description/)
+
+模拟题，~~或者说我没想到其他有技巧的解法~~，所以不做记录
