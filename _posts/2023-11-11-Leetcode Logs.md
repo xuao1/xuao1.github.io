@@ -524,3 +524,15 @@ public:
 2261 [美化数组的最少删除数](https://leetcode.cn/problems/minimum-deletions-to-make-array-beautiful/description/)
 
 模拟题，~~或者说我没想到其他有技巧的解法~~，所以不做记录
+
+### 2023-11-22
+
+2304 [网格中的最小路径代价](https://leetcode.cn/problems/minimum-path-cost-in-a-grid/description/)
+
+简单的 DP，需要注意的是题目中关于数组的描述：
+
+> `moveCost[i][j]` 是从值为 `i` 的单元格移动到下一行第 `j` 列单元格的代价
+
+不是位置，而是**值**
+
+其他的不需要记录
