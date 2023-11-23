@@ -536,3 +536,32 @@ public:
 不是位置，而是**值**
 
 其他的不需要记录
+
+### 2023-11-23
+
+1410 [HTML 实体解析器](https://leetcode.cn/problems/html-entity-parser/submissions/484239493/)
+
+字符串替换题目，比较经典，所以记录一下。代码值得记住。
+
+另外有两个小细节：
+
++ `&amp` 会替换为 `&`，`&` 又是 HTML 特殊字符的开头，所以应该最后替换
++ 即使最后替换 `&amp`，每次替换也应该从上次替换的下一个开始，要不然也会有被替换出的 `&` 与后续字符拼接而被误替换的情况
+
+完整代码：
+
+```c++
+string entityParser(string text) {
+    vector<string> str = {"&quot;", "&apos;", "&gt;", "&lt;", "&frasl;", "&amp;"};
+    vector<string> rep = {"\"", "\'", ">", "<", "/", "&"};
+    for(int i = 0; i < str.size(); i++){
+        int pos = text.find(str[i]);
+        while(pos != string::npos){
+            text.replace(pos, str[i].size(), rep[i]);
+            pos = text.find(str[i], pos + rep[i].size());
+        }
+    }
+    return text;
+}
+```
+
