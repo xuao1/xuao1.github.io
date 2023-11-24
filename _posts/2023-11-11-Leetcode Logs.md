@@ -565,3 +565,20 @@ string entityParser(string text) {
 }
 ```
 
+### 2023-11-24
+
+今天的每日一题 2824 [统计和小于目标的下标对数目](https://leetcode.cn/problems/count-pairs-whose-sum-is-less-than-target/description/) 比较简单，不做记录。
+
+不过今天做的另外一道题 2750 [将数组划分成若干好子数组的方式 ](https://leetcode.cn/problems/ways-to-split-array-into-good-subarrays/) 值得记录一下：
+
+> 数组 nums，只包含 0 和 1 两种元素
+>
+> 切分为若干子数组，每个子数组有且只有一个 1，问切分方法数
+
+首先，子数组应该是不改变原数组元素的位置的
+
+关键的想法：
+
+以数组 `[0,1,0,0,1]` 为例，**应该是在两个 1 之间切分**，共 3 个位置，那么就有 3 种方法数，当有更多 1 时，结果相乘。
+
+这个想明白以后，代码就比较简单了。
