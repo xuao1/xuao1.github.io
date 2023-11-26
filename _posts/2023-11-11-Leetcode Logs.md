@@ -607,3 +607,51 @@ string entityParser(string text) {
 + 另一个是，答案虽然需要取 MOD，但是在中途比较的过程中不可以取 MOD
 
 代码比较简单，不做记录。
+
+### 2023-11-26
+
+828 [统计子串中的唯一字符 ](https://leetcode.cn/problems/count-unique-characters-of-all-substrings-of-a-given-string/description/)
+
+> 给一个字符串，仅由大写字母组成
+>
+> 求该字符串的「所有字串的唯一字符」的个数之和
+>
+> `1 <= s.length <= 105`
+
+一开始一直在 DP 的方向思考（~~主要是题目标签里有动态规划~~），想的是类似线段树的思想构造一个数，维护长度为 2 的幂的区间的各个字符出现的次数。
+
+问题是创建这棵树时间为 $O(nlogn)$，但是查询仍然是 $O(n^2logn)$，而且常数比较大，至少为 26（大写字母的个数），会超时。
+
+~~然后就去看题解了~~
+
+核心在于转变思考切入点，之前一直在思考怎么逐个区间求，但是转变到从每个字母入手，求其对答案的贡献，那就很简单了。
+
+对于一个字符 c，当前下标为 index，其左边最近的 c 的位置为 l，右边最近的 c 的位置为 r，那么该字符 c 对答案的贡献为 **(index - l) * (r - index)**
+
+维护每个字母出现的所有位置，用一个二维数组即可，注意**处理好边界**。
+
+完整代码：
+
+```c++
+class Solution {
+public:
+    int uniqueLetterString(string s) {
+        int n = s.size();
+        vector<vector<int>> f(26);
+        for (int i = 0; i < n; i++) {
+            f[s[i] - 'A'].push_back(i);
+        }
+        int ans = 0;
+        for(int i = 0; i < 26; i++){
+            int len = f[i].size();
+            for(int j = 0; j < len; j++){
+                int l = (j == 0 ? -1 : f[i][j - 1]);
+                int r = (j == len - 1 ? n : f[i][j + 1]);
+                ans += (f[i][j] - l) * (r - f[i][j]);
+            }
+        }
+        return ans;
+    }
+};
+```
+
