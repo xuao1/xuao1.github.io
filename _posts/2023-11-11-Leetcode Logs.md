@@ -655,3 +655,56 @@ public:
 };
 ```
 
+### 2023-11-27
+
+907 [子数组的最小值之和](https://leetcode.cn/problems/sum-of-subarray-minimums/description/)
+
+> 给定一个整数数组 `arr`，找到 `min(b)` 的总和，其中 `b` 的范围为 `arr` 的每个（连续）子数组
+>
+> - `1 <= arr.length <= 3 * 10^4`
+> - `1 <= arr[i] <= 3 * 10^4`
+
+这个题和 11 月 26 日的每日一题解题思想基本一摸一样，统计每个数字对 answer 的贡献。
+
+为了避免重复数字的重复统计，得要求一个方向是 >=，一个方向是 >.
+
+~~但是直接写会超时~~
+
+其实有点怪，直接写的时间复杂度为 $O(n^2)$，~~按理说不应该超时啊~~
+
+使用单调栈优化，单调栈的精髓是，**如果我想左找小于当前数字的下标，如果左边第 j 个数字大于当前数字，那么再往左连续的大于第 j 个数字的元素都可以跳过**。
+
+完整代码为：
+
+```c++
+class Solution {
+public:
+    int sumSubarrayMins(vector<int>& arr) {
+        int n = arr.size();
+        long long ans = 0;
+        vector<int> l(n), r(n);
+        vector<int> stack;
+        for(int i = 0; i < n; i++){
+            while(!stack.empty() && arr[stack.back()] > arr[i]){
+                stack.pop_back();
+            }
+            l[i] = stack.empty() ? -1 : stack.back();
+            stack.push_back(i);
+        }
+        stack.clear();
+        for(int i = n - 1; i >= 0; i--){
+            while(!stack.empty() && arr[stack.back()] >= arr[i]){
+                stack.pop_back();
+            }
+            r[i] = stack.empty() ? n : stack.back();
+            stack.push_back(i);
+        }
+        for(int i = 0; i < n; i++){
+            ans += (long long)arr[i] * (long long)(i - l[i]) * (long long)(r[i] - i);
+            ans %= MOD;
+        }
+        return (int)ans;
+    }
+};
+```
+
