@@ -717,3 +717,10 @@ public:
 最简单的时间就是使用链表
 
 不过因为内部弹出只涉及到正中间，所以可以使用两个双端队列，时间性能上更优
+
+此外今天做的另一道题目 1605 [给定行和列的和求可行矩阵 ](https://leetcode.cn/problems/find-valid-matrix-given-row-and-column-sums/description/) 也值得记录一下
+
+> 给出行和和列和，求一个可行的非负矩阵
+
+贪心构造，对每个位置，取为 `min(rowSum[i], colSum[j])`，然后更新 rowSum 和 colSum
+
