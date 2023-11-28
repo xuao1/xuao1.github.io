@@ -708,3 +708,12 @@ public:
 };
 ```
 
+### 2023-11-28
+
+1670 [设计前中后队列](https://leetcode.cn/problems/design-front-middle-back-queue/)
+
+> 支持在队列前、正中间、尾 push 和 pop 操作
+
+最简单的时间就是使用链表
+
+不过因为内部弹出只涉及到正中间，所以可以使用两个双端队列，时间性能上更优
