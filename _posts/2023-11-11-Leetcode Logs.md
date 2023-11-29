@@ -724,3 +724,8 @@ public:
 
 贪心构造，对每个位置，取为 `min(rowSum[i], colSum[j])`，然后更新 rowSum 和 colSum
 
+### 2023-11-29
+
+2336 [无限集中的最小数字](https://leetcode.cn/problems/smallest-number-in-infinite-set/description/)
+
+比较简单，不做记录
