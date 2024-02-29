@@ -1,0 +1,53 @@
+---
+title: Paper Reading MIRASOL3B A MULTIMODAL AUTOREGRESSIVE MODEL FOR TIME-ALIGNED AND CONTEXTUAL MODALITIES
+author: xuao
+date: 2024-02-29 14:41:00 +800
+categories: [Paper Reading]
+tags: [Multimodal, Autoregressive, Combiner, Reconstruct]
+---
+
+# MIRASOL3B: A MULTIMODAL AUTOREGRESSIVE MODEL FOR TIME-ALIGNED AND CONTEXTUAL MODALITIES
+
+## 1. 概括
+
+### 1.1 是什么
+
+Mirasol3B，是一个多模态自回归模型，处理异构模态：video, audio, text
+
+### 1.2 为什么
+
+不同模态的特征不同，video audio 通常以较高的频率获取，它两个几乎是时间对齐的，体积大需要更多的计算资源，长依赖的处理比较困难。text 不与它们同步。
+
+### 1.3 怎么做
+
+包含两个部分：
+
+1. an autoregressive component for the time-synchronized modalities (audio and video)
+
+2. an autoregressive component for the context modalities which are not necessarily aligned in time but are still sequential
+
+在第一部分，为了处理长 video-audio 序列，将序列切分，引入了一个 Combiner 提取一个时间片内的特征，目标是兼顾 compact (efficient) & expressive.
+
+![Mirasol3B-architecture]({{ site.url }}/my_img/Mirasol3B-architecture.png)
+
+第一部分还引入了 autoregressive model，会进行预测和重构（reconstruct），这部分也是最令我困惑的。目前我的理解是，这样做是为了学习 video-audio 的时序动态特征，捕捉视频和音频数据中的时间动态和依赖性。以下来自 ChatGPT 的解释：
+
+> **Temporal Dependency Modeling** 时间依赖性建模：该模型旨在捕捉随时间推移视频和音频片段之间的时间依赖性。通过将当前片段的表示条件化于前一个片段的表示，模型能够理解内容的演变，这对于需要理解视频时间动态的任务至关重要，如动作识别或事件检测。
+>
+> **Sequential Feature Reconstruction** 序列特征重构：模型基于前一步骤和一个潜在向量h对每个视频块的特征进行重构，这一重构过程不仅仅是基于过去内容预测未来内容；而是在视频和音频序列进展过程中构建一个连续且连贯的理解。通过这样做，模型可以生成更加细腻和富有上下文的视频和音频内容表示，这对各种下游任务都可能是有益的。
+>
+> **Compact and Rich Representations** 紧凑且丰富的表示：通过重构特征和基于之前输入的条件化，该方法使模型能够生成紧凑而表达丰富的视频和音频内容表示。这些表示预期能够捕捉内容的本质特征，同时丢弃冗余或不相关的信息，使得模型更加高效，且可能在需要理解视频和音频内容的任务上更有效。
+
+## 2. 有价值的内容
+
++ Autoregressive models are powerful generative models that are well suited for data which appears in a sequence, modeling the probability of the current value, conditioned of previous ones.
+
++ Token Turing Machine (TTM): A recurrent sequential model with Transformers and token-based operations. The key idea is to make the Transformer processor generate the outputs by utilizing memory Mt instead of the entire history of features.
+
++ processing the video in chunks autoregressively in time is more advantageous than learning from the full video at once
+
++ We apply random masking to the combiner output features at a ratio of as a form of dropout regularization as we found this stabilizes the causal model latent 0.75% reconstruction
+
+  > 应用随机掩码到组合器输出特征，以 0.75% 的比率作为一种 dropout 正则化形式。这种技术被用来防止过拟合，并通过在训练期间随机禁用组合器输出中的少量特征来提高模型的稳健性。这个过程类似于神经网络中常用的 dropout 正则化，其中在特定前向或后向传递过程中会随机忽略层中的部分节点，有助于使模型对神经元具体权重不那么敏感，并更能够从训练数据泛化。
+  >
+  > 使用 0.75% 比率进行随机掩码表明，在平均情况下，将有 0.75% 的组合器输出特征在训练期间被随机设置为零。发现这可以稳定因果模型的潜在重建，在论文第 3.3.1 节详述了自回归建模过程中一个重要方面。因果模型可能依赖数据序列性质，逐步构建其对数据理解。通过掩码引入随机性可以确保该模型不会过度依赖于数据上具体路径，并且能够有效处理变异和噪声。
