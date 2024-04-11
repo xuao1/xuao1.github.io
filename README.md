@@ -2,7 +2,7 @@
 
 ## Page
 
-[xuao's Blog](http://xuao.me/)
+[xuao's Blog](https://xuao1.github.io/)
 
 ## License
 
